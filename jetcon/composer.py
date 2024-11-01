@@ -1,10 +1,11 @@
 from pathlib import Path
-from copy import deepcopy
+# from copy import deepcopy
 from typing import Callable
 
 from jetcon.node import JetNode
 from jetcon.context import JetContext
 from jetcon.keywords import Keywords
+from jetcon.merge import merge
 
 
 COMPOSERS = dict()
@@ -57,7 +58,8 @@ def _compose_imports(
     node: JetNode,
     specs: list[str]
 ) -> JetNode:
-    _node = deepcopy(node)
+    # empty node to write to
+    _node = JetNode({})
 
     for spec in specs:
         # parse path and tag
@@ -84,13 +86,14 @@ def _compose_imports(
 
         # if tagged import -> use it as key
         if tag is not None:
-            node.update({tag: new_node})
+            new_node = JetNode({tag: new_node}, recursive=False)
+            merge(_node, new_node)
         else:
-            node.update(**new_node)
+            merge(_node, new_node)
+            # node.update(**new_node)
     # revert context parameters from parent node
     # parent node parameters have higher priority
-    node.update(**_node)
-    return node
+    return merge(_node, node)
 
 
 register_composer(Keywords.imports.value, _compose_imports)

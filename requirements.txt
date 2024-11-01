@@ -1,1 +1,1 @@
-rocket@git+https://github.com/dsenushkin/adict
+adict@git+https://github.com/dsenushkin/adict
