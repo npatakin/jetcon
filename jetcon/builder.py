@@ -1,4 +1,5 @@
 import inspect
+import importlib
 from typing import Callable, Any
 from functools import partial, partialmethod
 
@@ -38,7 +39,7 @@ def _import_from_string(
 ) -> Callable:
     try:
         module_, class_ = spec.rsplit(".", 1)
-        module_ = __import__(module_, fromlist=[class_])
+        module_ = importlib.import_module(module_)
         cls = getattr(module_, class_)
 
         if sub is not None:
