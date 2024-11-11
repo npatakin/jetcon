@@ -42,11 +42,9 @@ def read_yaml(
         parent = JetContext._get_resolver()
         path = (Path(parent) / path).resolve()
 
-    loader = yaml.FullLoader
-
     # load and construct JetNode
     with path.open("r") as file:
-        tree = yaml.load(file, Loader=loader)
+        tree = yaml.safe_load(file)
     return JetNode(tree)
 
 

@@ -38,7 +38,7 @@ def save_yaml(
         raise ValueError(f"File already exists: {str(path)}")
 
     with path.open("w") as file:
-        yaml.dump(node, file)
+        yaml.safe_dump(node, file)
 
 
 register_saver(".yaml", save_yaml)
