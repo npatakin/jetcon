@@ -1,7 +1,7 @@
 import inspect
 import importlib
 from typing import get_type_hints
-from dataclasses import fields, is_dataclass
+from dataclasses import fields, is_dataclass, MISSING
 from typing import Callable, Any
 from functools import partial, partialmethod
 from typeguard import check_type, TypeCheckError    # type: ignore
@@ -117,12 +117,16 @@ def build_dataclass(
     data = dict()
 
     for field in fields(factory):
+        # fetch arg from node
+        arg = kwargs.pop(field.name, field.default)
+
+        if arg is MISSING:
+            raise ValueError(f"Field {field.name} is not specified.")
+
         # uses typing.get_type_hints to correctly parse type hints
         # field.type can be str when `from __future__ import annotations`
         # is used in module
         ftype = get_type_hints(factory)[field.name]
-        # fetch arg from node
-        arg = kwargs.pop(field.name)
         try:
             # check type using typeguard
             check_type(arg, ftype)

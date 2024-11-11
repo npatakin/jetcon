@@ -1,6 +1,6 @@
 import inspect
 from typing import Any, Callable
-from dataclasses import is_dataclass, fields, MISSING
+from dataclasses import is_dataclass, fields
 
 from jetcon.node import JetNode
 from jetcon.keywords import Keywords
@@ -17,11 +17,9 @@ def cast(
 ) -> Any:
     if is_dataclass(factory):
         for field in fields(factory):
-            _node = node.get(field.name, None)
-            if _node is None and field.default == MISSING:
-                raise ValueError(f"Field {field.name} has not been specified.")
+            _node = node.get(field.name, field.default)
 
-            if isinstance(node, JetNode) and is_dataclass(field.type):
+            if isinstance(_node, JetNode) and is_dataclass(field.type):
                 node[field.name] = cast(_node, field.type)
 
         try:
