@@ -1,9 +1,6 @@
 from __future__ import annotations
 from adict import adict     # type: ignore
-from pathlib import Path
-
-from jetcon.context import JetContext
-from jetcon.io import read_yaml
+from typing import Any, Callable
 
 
 class JetNode(adict):
@@ -12,6 +9,7 @@ class JetNode(adict):
         cfg: dict = {},
         recursive: bool = True
     ) -> None:
+        self._built = False
         # create nodes recursively
         if recursive:
             for key, value in cfg.items():
@@ -30,18 +28,41 @@ class JetNode(adict):
         super().__init__(cfg)
 
     @staticmethod
-    def from_yaml(
+    def read(
         path: str
     ) -> JetNode:
-        # resolve absolute path from relative
-        path = Path(path)
+        from jetcon.read import read
+        return read(path, reset=True, compose=True)
 
-        if not path.is_absolute():
-            parent = JetContext._get_resolver()
-            path = (Path(parent) / path).resolve()
+    def build(
+        self
+    ) -> Any:
+        from jetcon.build import build
+        return build(self, recursive=True)
 
-        # read raw yaml
-        tree = read_yaml(path)
-        # recursively create nodes
-        node = JetNode(tree)
-        return node
+    def cast(
+        self,
+        factory: Callable
+    ) -> Any:
+        from jetcon.cast import cast
+        return cast(self, factory=factory)
+
+    def to_dict(
+        self
+    ) -> dict:
+        from jetcon.cast import to_dict
+        return to_dict(self, recursive=True)
+
+    def merge(
+        self,
+        node: JetNode
+    ) -> JetNode:
+        from jetcon.merge import merge
+        return merge(self, node)
+
+    def save(
+        self,
+        path: str
+    ) -> None:
+        from jetcon.save import save
+        return save(self, path=path)
