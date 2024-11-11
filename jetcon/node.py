@@ -9,7 +9,6 @@ class JetNode(adict):
         cfg: dict = {},
         recursive: bool = True
     ) -> None:
-        self._built = False
         # create nodes recursively
         if recursive:
             for key, value in cfg.items():

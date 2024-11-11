@@ -51,10 +51,6 @@ def to_dict(
     node: JetNode,
     recursive: bool = True
 ) -> dict:
-    if node._built is True:
-        raise ValueError("Cannot convert a node that has been built. "
-                         "Only raw nodes can be converted into dict. ")
-
     if recursive:
         # recursively cast inner nodes to dict
         for key, value in node.items():
@@ -68,6 +64,5 @@ def to_dict(
                         _v = to_dict(_v)
                     _value.append(_v)
                 node[key] = _value
-    # remove service fields from dict
-    del node._built
+
     return cast(node, dict)

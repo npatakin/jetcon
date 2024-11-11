@@ -189,5 +189,4 @@ def build(
         factory = _import_from_string(node.pop(kw))
         return BUILDERS[kw](factory, kwargs=node)
 
-    node._built = True
     return node
