@@ -23,9 +23,10 @@ class JetConfig:
 
     @staticmethod
     def build(
-        cfg: JetNode
+        cfg: JetNode,
+        partial: bool = True
     ) -> JetNode:
-        return build(cfg)
+        return build(cfg, recursive=True, partial=partial)
 
     @staticmethod
     def cast(

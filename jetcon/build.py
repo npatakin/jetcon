@@ -3,7 +3,8 @@ import importlib
 from typing import get_type_hints
 from dataclasses import fields, is_dataclass, MISSING
 from typing import Callable, Any
-from functools import partial, partialmethod
+from functools import partial as partial_fn
+from functools import partialmethod as partial_md
 from typeguard import check_type, TypeCheckError    # type: ignore
 
 from jetcon.keywords import Keywords
@@ -17,7 +18,7 @@ BUILDERS = dict()
 
 def register_builder(
     keyword: str,
-    builder: Callable[[Callable, dict[str, Any]], Any]
+    builder: Callable[[Callable, dict[str, Any], bool], Any]
 ) -> None:
     """
     Registers a builder function for a given keyword.
@@ -55,73 +56,94 @@ def _import_from_string(
 
 def build_function(
     factory: Callable,
-    kwargs: dict[str, Any]
+    kwargs: dict[str, Any],
+    partial: bool,
 ) -> Callable | Any:
     # look for required arguments.
-    required = set()
+    required, total = set(), set()
     for arg in inspect.signature(factory).parameters.values():
+        total.add(arg.name)
         # arg without default values is supposed to be required
-        if arg.default is inspect._empty:
+        if arg.default is not inspect._empty:
             continue
         required.add(arg.name)
 
     if len(required - kwargs.keys()) > 0:
-        _factory = partial(factory, **kwargs)
+        if not partial:
+            raise ValueError(f"Can't call function {factory} with partially initialized"
+                             " arguments. Partial mode is disabled. "
+                             f"Missing args: {required - kwargs.keys()}")
+
+        # enabled => check unexpected args
+        if len(kwargs.keys() - total) > 0:
+            raise ValueError(f"Can't call function {factory} with partially initialized "
+                             f"arguments. Unexpected arguments: {kwargs.keys() - total}")
+        _factory = partial_fn(factory, **kwargs)
         _factory.__doc__ = factory.__doc__
         return _factory
 
-    return factory(**kwargs)
+    # this try catch block checks unexpected arguments errors mostly.
+    try:
+        return factory(**kwargs)
+    except Exception as e:
+        raise ValueError(f"Can't call function {factory}. {e}")
 
 
 def build_class(
     factory: Callable,
-    kwargs: dict[str, Any]
+    kwargs: dict[str, Any],
+    partial: bool,
 ) -> Callable | Any:
-    # look for required arguments
-    required = set()
+    # look for required and total arguments
+    required, total = set(), set()
     for arg in inspect.signature(factory.__init__).parameters.values():
         # skip self argument that is mandatory for __init__
         if arg.name == "self":
             continue
+        total.add(arg.name)
 
-        if arg.default is inspect._empty:
+        if arg.default is not inspect._empty:
             continue
         required.add(arg.name)
 
     if len(required - kwargs.keys()) > 0:
-        factory.__init__ = partialmethod(factory.__init__, **kwargs)
+        # not all required args are passed, so check partial mode
+        if not partial:
+            # disabled => raise exepction
+            raise ValueError(f"Can't create class {factory} with partially initialized"
+                             " arguments. Partial mode is disabled. "
+                             f"Missing args: {required - kwargs.keys()}")
+
+        # enabled => check unexpected args
+        if len(kwargs.keys() - total) > 0:
+            raise ValueError(f"Can't create class {factory} with partially initialized "
+                             f"arguments. Unexpected arguments: {kwargs.keys() - total}")
+        # only expected args are presented, just call partial method
+        factory.__init__ = partial_md(factory.__init__, **kwargs)
         # return partially initializer factory
         return factory
 
-    return factory(**kwargs)
+    # this try catch block checks unexpected arguments errors mostly.
+    try:
+        return factory(**kwargs)
+    except Exception as e:
+        raise ValueError(f"Can't create class {factory}. {e}")
 
 
 def build_dataclass(
     factory: Callable,
     kwargs: dict[str, Any],
-    strict: bool = True
+    partial: bool,
 ) -> Callable | Any:
     if not is_dataclass(factory):
         raise ValueError(f"Class {factory} is not dataclass")
 
-    _fields = set([f.name for f in fields(factory)])
-
-    if strict:
-        # strict mode requires full set of args to be in node
-        _nonexisting = kwargs.keys() - _fields
-        if len(_nonexisting) > 0:
-            raise ValueError(
-                f"Fields {_nonexisting} does not exist in dataclass {factory}"
-            )
-
-    data = dict()
-
     for field in fields(factory):
         # fetch arg from node
-        arg = kwargs.pop(field.name, field.default)
+        arg = kwargs.get(field.name, field.default)
 
-        if arg is MISSING:
-            raise ValueError(f"Field {field.name} is not specified.")
+        if arg is MISSING and partial:
+            continue
 
         # uses typing.get_type_hints to correctly parse type hints
         # field.type can be str when `from __future__ import annotations`
@@ -132,17 +154,11 @@ def build_dataclass(
             check_type(arg, ftype)
         except TypeCheckError:
             raise ValueError(
-                f"JetNode is not broadcastable to dataclass {factory.__name__}. "
-                f"Arg: {arg} has type {type(arg)}, but {ftype} is expected."
+                f"Dataclass {factory.__name__} typecheck error. "
+                f"Arg: {field.name} has type {type(arg)}, but {ftype} is expected."
             )
 
-        data[field.name] = arg
-
-    if len(kwargs) != 0 and strict:
-        raise ValueError(f"Strict mode requires JetNode to have exactly the same number "
-                         f"of kwargs as the dataclass {factory.__name__}.")
-
-    return factory(**data)
+    return build_class(factory, kwargs, partial)
 
 
 register_builder(Keywords.func.value, build_function)
@@ -171,7 +187,8 @@ def _resolve_builder(
 
 def build(
     node: JetNode,
-    recursive: bool = True
+    recursive: bool = True,
+    partial: bool = True,
 ) -> JetNode:
     if recursive:
         # recursively build inner nodes first
@@ -191,6 +208,6 @@ def build(
 
     if kw is not None:
         factory = _import_from_string(node.pop(kw))
-        return BUILDERS[kw](factory, kwargs=node)
+        return BUILDERS[kw](factory, kwargs=node, partial=partial)
 
     return node

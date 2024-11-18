@@ -34,14 +34,15 @@ class JetNode(adict):
         return read(path, reset=True, compose=True)
 
     def build(
-        self
+        self,
+        partial: bool = True
     ) -> Any:
         from jetcon.build import build
-        return build(self, recursive=True)
+        return build(self, recursive=True, partial=partial)
 
     def cast(
         self,
-        factory: Callable
+        factory: Callable,
     ) -> Any:
         from jetcon.cast import cast
         return cast(self, factory=factory)

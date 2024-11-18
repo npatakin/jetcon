@@ -24,7 +24,7 @@ def cast(
 
         try:
             node.pop(Keywords.data.value, None)
-            return build_dataclass(factory, node)
+            return build_dataclass(factory, node, partial=False)
         except Exception as e:
             raise ValueError(
                 f"Broadcasting to dataclass {factory.__name__} failed. {e}"
@@ -32,7 +32,7 @@ def cast(
     if inspect.isclass(factory):
         try:
             node.pop(Keywords.cls.value, None)
-            return build_class(factory, node)
+            return build_class(factory, node, partial=False)
         except Exception as e:
             raise ValueError(
                 f"Broadcasting to class {factory.__name__} failed. {e}"
@@ -40,7 +40,7 @@ def cast(
     if inspect.isfunction(factory):
         try:
             node.pop(Keywords.func.value, None)
-            return build_function(factory, node)
+            return build_function(factory, node, partial=False)
         except Exception as e:
             raise ValueError(
                 f"Broadcasting to function {factory.__name__} failed. {e}"
