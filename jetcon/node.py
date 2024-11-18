@@ -1,5 +1,6 @@
 from __future__ import annotations
 from adict import adict     # type: ignore
+from copy import deepcopy
 from typing import Any, Callable
 
 
@@ -38,20 +39,21 @@ class JetNode(adict):
         partial: bool = True
     ) -> Any:
         from jetcon.build import build
-        return build(self, recursive=True, partial=partial)
+        # build copied version to be able to secure the original tree
+        return build(deepcopy(self), recursive=True, partial=partial)
 
     def cast(
         self,
         factory: Callable,
     ) -> Any:
         from jetcon.cast import cast
-        return cast(self, factory=factory)
+        return cast(deepcopy(self), factory=factory)
 
     def to_dict(
         self
     ) -> dict:
         from jetcon.cast import to_dict
-        return to_dict(self, recursive=True)
+        return to_dict(deepcopy(self), recursive=True)
 
     def merge(
         self,

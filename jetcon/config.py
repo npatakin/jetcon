@@ -1,5 +1,6 @@
 
 from typing import Callable, Any
+from copy import deepcopy
 
 from jetcon.node import JetNode
 from jetcon.build import build
@@ -26,20 +27,20 @@ class JetConfig:
         cfg: JetNode,
         partial: bool = True
     ) -> JetNode:
-        return build(cfg, recursive=True, partial=partial)
+        return build(deepcopy(cfg), recursive=True, partial=partial)
 
     @staticmethod
     def cast(
         cfg: JetNode,
         factory: Callable
     ) -> Any:
-        return cast(cfg, factory)
+        return cast(deepcopy(cfg), factory)
 
     @staticmethod
     def to_dict(
         cfg: JetNode
     ) -> dict:
-        return to_dict(cfg, recursive=True)
+        return to_dict(deepcopy(cfg), recursive=True)
 
     @staticmethod
     def merge(
