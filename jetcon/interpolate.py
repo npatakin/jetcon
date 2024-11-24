@@ -48,29 +48,32 @@ def _interpolate_string(
     return value
 
 
-def _interpolate(
+def _interpolate_node(
     node: JetNode,
     tree: JetNode,
 ) -> JetNode:
-    # recursively interpolate inner nodes first
-    for key, value in node.items():
-        if isinstance(value, JetNode):
-            node[key] = _interpolate(value, tree)
+    return JetNode({k: _interpolate(v, tree) for k, v in node.items()})
 
-        if isinstance(value, list):
-            _value = []
-            for _v in value:
-                if isinstance(_v, JetNode):
-                    _v = _interpolate(_v, tree)
 
-                if isinstance(_v, str):
-                    _v = _interpolate_string(_v, tree)
+def _interpolate_list(
+    lst: list,
+    tree: JetNode,
+) -> list:
+    return [_interpolate(v, tree) for v in lst]
 
-                _value.append(_v)
-            node[key] = _value
 
-        if isinstance(value, str):
-            node[key] = _interpolate_string(value, tree)
+def _interpolate(
+    node: JetNode | list,
+    tree: JetNode,
+) -> JetNode:
+    if isinstance(node, list):
+        return _interpolate_list(node, tree)
+
+    if isinstance(node, JetNode):
+        return _interpolate_node(node, tree)
+
+    if isinstance(node, str):
+        return _interpolate_string(node, tree)
 
     return node
 
@@ -78,4 +81,4 @@ def _interpolate(
 def interpolate(
     tree: JetNode
 ) -> JetNode:
-    return _interpolate(tree, tree)
+    return _interpolate_node(tree, tree)
