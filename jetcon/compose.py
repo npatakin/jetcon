@@ -52,7 +52,7 @@ def _compose_imports(
         # add to file to visited stack for inner imports
         JetContext._add_visit(path)
         # read and compose inner configs
-        new_node = read(path, compose=True)
+        new_node = read(path, compose=True, reset=False)
         # remove path from visited stack, since
         # we may want to import the same file in different tree node
         JetContext._rm_visit(path)

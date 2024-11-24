@@ -78,7 +78,9 @@ def read(
     if compose:
         # import it here instead of top level due to circular imports
         from jetcon.compose import compose as _compose
+        from jetcon.interpolate import interpolate as _interpolate
         tree = _compose(tree)
+        tree = _interpolate(tree)
     # free deps stack
     JetContext._rm_visit(path)
     # reset resolver
