@@ -185,29 +185,73 @@ def _resolve_builder(
     return specified.pop()
 
 
+def _build_node(
+    dct: dict,
+    partial: bool
+) -> dict:
+    return JetNode({k: _build(v, partial) for k, v in dct.items()})
+
+
+def _build_list(
+    lst: list,
+    partial: bool
+) -> list:
+    return [_build(v, partial) for v in lst]
+
+
+def _build(
+    node: Any,
+    partial: bool = True
+) -> Any:
+    if isinstance(node, list):
+        return _build_list(node, partial)
+
+    if isinstance(node, JetNode):
+        return build(node)
+
+    return node
+
+
 def build(
     node: JetNode,
     recursive: bool = True,
-    partial: bool = True,
+    partial: bool = True
 ) -> JetNode:
     if recursive:
-        # recursively build inner nodes first
-        for key, value in node.items():
-            if isinstance(value, JetNode):
-                node[key] = build(value)
+        node = _build_node(node, partial)
 
-            if isinstance(value, list):
-                _value = []
-                for _v in value:
-                    if isinstance(_v, JetNode):
-                        _v = build(_v)
-                    _value.append(_v)
-                node[key] = _value
+    builder = _resolve_builder(node)
 
-    kw = _resolve_builder(node)
-
-    if kw is not None:
-        factory = _import_from_string(node.pop(kw))
-        return BUILDERS[kw](factory, kwargs=node, partial=partial)
+    if builder is not None:
+        factory = _import_from_string(node.pop(builder))
+        return BUILDERS[builder](factory, kwargs=node, partial=partial)
 
     return node
+
+# def build(
+#     node: JetNode,
+#     recursive: bool = True,
+#     partial: bool = True,
+# ) -> JetNode:
+#     if recursive:
+#         node = _build_node(node)
+#         # recursively build inner nodes first
+#         for key, value in node.items():
+#             if isinstance(value, JetNode):
+#                 node[key] = build(value)
+
+#             if isinstance(value, list):
+#                 _value = []
+#                 for _v in value:
+#                     if isinstance(_v, JetNode):
+#                         _v = build(_v)
+#                     _value.append(_v)
+#                 node[key] = _value
+
+#     kw = _resolve_builder(node)
+
+#     if kw is not None:
+#         factory = _import_from_string(node.pop(kw))
+#         return BUILDERS[kw](factory, kwargs=node, partial=partial)
+
+#     return node
