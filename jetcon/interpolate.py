@@ -63,7 +63,7 @@ def _interpolate_list(
 
 
 def _interpolate(
-    node: JetNode | list,
+    node: JetNode | list | str,
     tree: JetNode,
 ) -> JetNode:
     if isinstance(node, list):
