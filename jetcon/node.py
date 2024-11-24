@@ -4,6 +4,30 @@ from copy import deepcopy
 from typing import Any, Callable
 
 
+def _dict_to_node(
+    dct: dict
+) -> dict:
+    return {k: _to_node(v) for k, v in dct.items()}
+
+
+def _list_to_node(
+    lst: list
+) -> list:
+    return [_to_node(v) for v in lst]
+
+
+def _to_node(
+    node: Any
+) -> Any:
+    if isinstance(node, list):
+        return _list_to_node(node)
+
+    if isinstance(node, dict):
+        return JetNode(_dict_to_node(node))
+
+    return node
+
+
 class JetNode(adict):
     def __init__(
         self,
@@ -12,18 +36,7 @@ class JetNode(adict):
     ) -> None:
         # create nodes recursively
         if recursive:
-            for key, value in cfg.items():
-                if isinstance(value, dict):
-                    cfg[key] = JetNode(value)
-
-                if isinstance(value, list):
-                    _value = []
-                    for _v in value:
-                        if isinstance(_v, dict):
-                            _v = JetNode(_v)
-                        _value.append(_v)
-                    cfg[key] = _value
-
+            cfg = _dict_to_node(cfg)
         # use adict constructor
         super().__init__(cfg)
 
