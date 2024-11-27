@@ -36,7 +36,7 @@ class JetNode(adict):
     ) -> None:
         # case when yaml reader return list instead of dict
         if isinstance(cfg, list):
-            cfg = {i: cfg[i] for i in range(cfg)}
+            cfg = {i: it for i, it in enumerate(cfg)}
 
         # create nodes recursively
         if recursive:
