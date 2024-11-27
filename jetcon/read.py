@@ -57,6 +57,10 @@ def read(
     compose: bool = True,
     reset: bool = True
 ) -> JetNode:
+    # reset resolver
+    if reset:
+        JetContext._reset_resolver()
+
     if not isinstance(path, Path):
         path = Path(path)
 

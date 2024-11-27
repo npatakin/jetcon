@@ -31,9 +31,13 @@ def _to_node(
 class JetNode(adict):
     def __init__(
         self,
-        cfg: dict = {},
+        cfg: dict | list = {},
         recursive: bool = True
     ) -> None:
+        # case when yaml reader return list instead of dict
+        if isinstance(cfg, list):
+            cfg = {i: cfg[i] for i in range(cfg)}
+
         # create nodes recursively
         if recursive:
             cfg = _dict_to_node(cfg)
