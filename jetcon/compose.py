@@ -62,7 +62,6 @@ def _compose_imports(
             # node.update(**new_node)
     # revert context parameters from parent node
     # parent node parameters have higher priority
-    print(node, _node)
     return merge(_node, node)
 
 
