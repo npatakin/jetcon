@@ -3,6 +3,7 @@ import importlib
 from typing import get_type_hints
 from dataclasses import fields, is_dataclass, MISSING
 from typing import Callable, Any
+from functools import reduce
 from functools import partial as partial_fn
 from typeguard import check_type, TypeCheckError    # type: ignore
 
@@ -38,19 +39,28 @@ def register_builder(
 
 def _import_from_string(
     spec: str,
-    sub: str | None = None
 ) -> Callable:
-    try:
-        module_, class_ = spec.rsplit(".", 1)
-        module_ = importlib.import_module(module_)
-        cls = getattr(module_, class_)
 
-        if sub is not None:
-            return getattr(cls, sub)
-        return cls
+    if not spec:
+        raise ValueError("Empty import string.")
 
-    except Exception as e:
-        raise ImportError(f"Can't find class: {spec}; {e}")
+    specs = spec.split(".")
+    module_, var = spec.rsplit(".", 1)
+    vars_ = [var]
+
+    imported_module = None
+    for _ in specs:
+        try:
+            imported_module = importlib.import_module(module_)
+            break
+        except ImportError:
+            module_, var = module_.rsplit(".", 1)
+            vars_.insert(0, var)
+
+    if imported_module is None:
+        raise ImportError("Unknown string spec.")
+
+    return reduce(getattr, vars_, imported_module)
 
 
 def build_callable(
