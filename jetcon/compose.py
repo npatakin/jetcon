@@ -1,7 +1,3 @@
-# from pathlib import Path
-# from copy import deepcopy
-# from typing import Callable
-
 from jetcon.node import JetNode
 from jetcon.context import JetContext
 from jetcon.keywords import Keywords
@@ -33,7 +29,7 @@ def _parse_imports(
 
 def _compose_imports(
     node: JetNode,
-    specs: list[str]
+    specs: list[str],
 ) -> JetNode:
     # empty node to write to
     _node = JetNode({})
@@ -66,6 +62,7 @@ def _compose_imports(
             # node.update(**new_node)
     # revert context parameters from parent node
     # parent node parameters have higher priority
+    print(node, _node)
     return merge(_node, node)
 
 
