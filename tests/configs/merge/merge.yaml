@@ -1,0 +1,13 @@
+section:
+  subsection:
+    c1: 100
+    c2: 1000
+    lst:
+      - var:
+          at3: 3
+          at4: 4
+  sub2:
+    c: 3
+    d: 4
+  c: 3
+  d: 4

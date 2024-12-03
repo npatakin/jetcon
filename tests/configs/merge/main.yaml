@@ -1,0 +1,17 @@
+_import_:
+  - merge.yaml
+
+section:
+  subsection!:
+    d1: 1
+    d2: 2
+    lst:
+      - var: 
+          at1: 1
+          at2: 2
+
+  sub2:
+    a: 1
+    b: 2
+  a: 1
+  b: 2

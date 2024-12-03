@@ -1,0 +1,44 @@
+var_main: hello
+section_main:
+  subsection_main:
+    _import_: 
+      - import.yaml @ sub_import
+  
+_import_: 
+  - import.yaml @ sub_import
+
+
+optim:
+  _cls_: torch.optim.Adam
+  ls: 1.0E-5
+
+cls:
+  _cls_: __main__.CLS
+  a: 'cls_a'
+  b: 'cls_b'
+  d: "cls_kwarg"
+
+pcls:
+  _cls_: __main__.CLS
+  b: 'cls_b'
+  d: "cls_kwarg"
+
+fn:
+  _fn_: __main__.FN
+  a: 'fn_a'
+  b: 'fn_b'
+  d: "fn_kwarg"
+
+pfn:
+  _fn_: __main__.FN
+  b: 'fn_b'
+  d: "fn_kwarg"
+
+data:
+  _data_: __main__.DATACLASS
+  a: data_a
+
+
+pdata:
+  _data_: __main__.DATACLASS
+  b: asfdklasdfl;k

@@ -4,15 +4,22 @@ from typing import Any
 from jetcon.node import JetNode
 
 
-DO_NOT_MERGE = "!"
+ESCAPE_CHAR = "!"
 
+# usefull to extract string name without '!'
 EXTRACT_PATTERN = re.compile("[a-z0-9_]+", re.IGNORECASE)
+
+# usefull to check if section is mergable
+MERGABLE_PATTERN = re.compile("[a-z0-9_]+!", re.IGNORECASE)
+
+# usefull to check syntax
+SYNTAX_PATTERN = re.compile("[a-z0-9_]+!?", re.IGNORECASE)
 
 
 def _mergable(
     key: str
 ) -> None:
-    return key[-1] != DO_NOT_MERGE
+    return not bool(re.fullmatch(MERGABLE_PATTERN, key))   # key[-1] != ESCAPE_CHAR
 
 
 def _get(
@@ -23,16 +30,15 @@ def _get(
     if key in node:
         return node[key], key
     else:
-        return node[key + DO_NOT_MERGE], key + DO_NOT_MERGE
+        return node[key + ESCAPE_CHAR], key + ESCAPE_CHAR
 
 
 def _key(
     key: str
 ) -> str:
-    matches = re.findall(EXTRACT_PATTERN, key)
-    if len(matches) > 1:
+    if re.fullmatch(SYNTAX_PATTERN, key) is None:
         raise SyntaxError(f"Undefinded key syntax: {key}")
-    return matches[0]
+    return re.findall(EXTRACT_PATTERN, key)[0]
 
 
 def _keys(
@@ -49,7 +55,7 @@ def _replace(
     if key in node:
         node[key] = value
     else:
-        del node[key + DO_NOT_MERGE]
+        del node[key + ESCAPE_CHAR]
         node[key] = value
 
     return node
@@ -63,7 +69,6 @@ def merge(
     for k in _keys(src) & _keys(dst):
         sv, sk = _get(k, src)
         dv, dk = _get(k, dst)
-        print(sv, dv)
         if isinstance(sv, JetNode) and isinstance(dv, JetNode):
             if _mergable(sk):
                 _replace(dst, dk, merge(dv, sv))
