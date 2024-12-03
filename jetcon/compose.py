@@ -1,3 +1,5 @@
+from typing import Any
+
 from jetcon.node import JetNode
 from jetcon.context import JetContext
 from jetcon.keywords import Keywords
@@ -65,23 +67,39 @@ def _compose_imports(
     return merge(_node, node)
 
 
+def _compose_node(
+    node: JetNode,
+    recursive: bool = True
+) -> dict:
+    return JetNode({k: _compose(v, recursive) for k, v in node.items()})
+
+
+def _compose_list(
+    lst: list,
+    recursive: bool = True
+) -> list:
+    return [_compose(v, recursive) for v in lst]
+
+
+def _compose(
+    node: Any,
+    recursive: bool = True
+) -> Any:
+    if isinstance(node, list):
+        return _compose_list(node, recursive)
+
+    if isinstance(node, JetNode):
+        return compose(node, recursive)
+
+    return node
+
+
 def compose(
     node: JetNode,
     recursive: bool = True
 ) -> JetNode:
     if recursive:
-        # recursively build inner nodes first
-        for key, value in node.items():
-            if isinstance(value, JetNode):
-                node[key] = compose(value)
-
-            if isinstance(value, list):
-                _value = []
-                for _v in value:
-                    if isinstance(_v, JetNode):
-                        _v = compose(_v)
-                    _value.append(_v)
-                node[key] = _value
+        node = _compose_node(node, recursive)
 
     kw = Keywords.imports.value
 

@@ -61,7 +61,38 @@ def _replace(
     return node
 
 
-def merge(
+def _merge(
+    dst: Any,
+    src: Any
+) -> Any:
+    if isinstance(dst, JetNode) and isinstance(src, JetNode):
+        return _merge_nodes(dst, src)
+
+    if isinstance(dst, list) and isinstance(src, list):
+        return _merge_lists(dst, src)
+    # cannot merge other type, so just replace
+    return src
+
+
+def _merge_lists(
+    dst: list,
+    src: list
+) -> list:
+
+    last_ = 0
+    # intersection
+    for k, _ in enumerate(zip(dst, src)):
+        dst[k] = _merge(dst[k], src[k])
+        last_ = k + 1
+
+    # difference
+    for k in range(last_, len(src)):
+        dst.append(src[k])
+
+    return dst
+
+
+def _merge_nodes(
     dst: JetNode,
     src: JetNode
 ) -> JetNode:
@@ -69,11 +100,9 @@ def merge(
     for k in _keys(src) & _keys(dst):
         sv, sk = _get(k, src)
         dv, dk = _get(k, dst)
-        if isinstance(sv, JetNode) and isinstance(dv, JetNode):
-            if _mergable(sk):
-                _replace(dst, dk, merge(dv, sv))
-            else:
-                _replace(dst, dk, sv)
+
+        if _mergable(sk):
+            _replace(dst, dk, _merge(dv, sv))
         else:
             _replace(dst, dk, sv)
 
@@ -83,3 +112,10 @@ def merge(
         dst[k] = sv
 
     return dst
+
+
+def merge(
+    dst: JetNode,
+    src: JetNode
+) -> JetNode:
+    return _merge_nodes(dst, src)
