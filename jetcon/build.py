@@ -138,9 +138,19 @@ def build_dataclass(
     return build_callable(factory, kwargs, partial)
 
 
+
+def get_type(
+    factory: Callable,
+    kwargs: dict[str, Any],
+    partial: bool,
+):
+    return factory
+
+
 register_builder(Keywords.func.value, build_callable)
 register_builder(Keywords.cls.value, build_callable)
 register_builder(Keywords.data.value, build_dataclass)
+register_builder(Keywords.type.value, get_type)
 
 
 def _resolve_builder(
