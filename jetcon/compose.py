@@ -34,7 +34,7 @@ def _compose_imports(
     specs: list[str],
 ) -> JetNode:
     # empty node to write to
-    _node = JetNode({})
+    _node = None# JetNode({})
 
     if isinstance(specs, str):
         specs = [specs]
@@ -61,20 +61,25 @@ def _compose_imports(
         # if tagged import -> use it as key
         if tag is not None:
             # new_node = JetNode({tag: new_node}, recursive=False)
-            sub_node = new_node
+
             for sub_tag in tag.split('.'):
                 try:
-                    sub_node = sub_node.get(sub_tag)
+                    new_node = new_node.get(sub_tag)
                 except:
                     raise ValueError('Failed to resolve import key "{}" '
                                      'for "" path. Sub tag {} not found'.format(
                         tag, path, sub_tag))
-            merge(_node, sub_node)
+        if _node is None:
+            _node = new_node
         else:
             merge(_node, new_node)
+
             # node.update(**new_node)
     # revert context parameters from parent node
     # parent node parameters have higher priority
+    if len(node) == 0 and isinstance(_node, list):
+        return _node
+
     return merge(_node, node)
 
 
