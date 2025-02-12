@@ -17,10 +17,8 @@ class JetConfig:
                            "Use .from_*() methods to create config tree.")
 
     @staticmethod
-    def read(
-        path: str
-    ) -> JetNode:
-        return read(path, compose=True, reset=True)
+    def read(path: str) -> JetNode:
+        return read(path, compose=True)
 
     @staticmethod
     def build(

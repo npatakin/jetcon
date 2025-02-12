@@ -38,9 +38,9 @@ def read_yaml(
 ) -> JetNode:
     # resolver is specified in global read call
     # so, just use it here to resolve relatives
-    if not path.is_absolute():
-        parent = JetContext._get_resolver()
-        path = (Path(parent) / path).resolve()
+    # if not path.is_absolute():
+    #     parent = JetContext._get_resolver()
+    #     path = (Path(parent) / path).resolve()
 
     # load and construct JetNode
     with path.open("r") as file:
@@ -54,15 +54,12 @@ register_reader(".yml", read_yaml)
 
 def read(
     path: str | Path,
-    compose: bool = True,
-    reset: bool = True
+    compose: bool = True
 ) -> JetNode:
-    # reset resolver
-    if reset:
-        JetContext._reset_resolver()
-
     if not isinstance(path, Path):
         path = Path(path)
+    if not path.is_absolute():
+        path = path.resolve()
 
     ext = path.suffix.lower()
     reader = READERS.get(ext, None)
@@ -70,25 +67,20 @@ def read(
     if reader is None:
         raise ValueError(f"Cannot read from file with {ext}.")
 
-    if not path.is_absolute():
-        path = path.resolve()
-
-    # update global path resolver
-    JetContext._set_resolver(path.parent)
-    # add deps to stack
     JetContext._add_visit(path)
     # read title config and compose it recursively
-    tree = reader(path)
-    if compose:
-        # import it here instead of top level due to circular imports
-        from jetcon.compose import compose as _compose
-        from jetcon.interpolate import interpolate as _interpolate
-        tree = _compose(tree)
-        tree = _interpolate(tree)
-    # free deps stack
-    JetContext._rm_visit(path)
-    # reset resolver
-    if reset:
-        JetContext._reset_resolver()
+    try:
+        tree = reader(path)
+        if compose:
+            # import it here instead of top level due to circular imports
+            from jetcon.compose import compose as _compose
+            from jetcon.interpolate import interpolate as _interpolate
+            tree = _compose(tree)
+            tree = _interpolate(tree)
+        # free deps stack
+    except Exception as e:
+        raise RuntimeError('Exception occurred during config "{}" reading'.format(path))
+    finally:
+        JetContext._rm_visit(path)
 
     return tree

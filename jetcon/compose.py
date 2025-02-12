@@ -29,21 +29,29 @@ def _parse_imports(
     return _spec.get(0), _spec.get(1, None)
 
 
+OFFSET = 0
+
 def _compose_imports(
     node: JetNode,
     specs: list[str],
 ) -> JetNode:
+    global OFFSET
+
     # empty node to write to
     _node = None# JetNode({})
 
     if isinstance(specs, str):
         specs = [specs]
 
+    OFFSET += 4
+
     for spec in specs:
         # parse path and tag
         path, tag = _parse_imports(spec)
         # resolve path relative to current parent
         path = JetContext._resolve_path(path)
+
+        # print(' '*(OFFSET-4) + 'Import spec: "{}". Resolved path: "{}"'.format(spec, path))
 
         # this if statement check circular import
         if JetContext._is_visited(str(path)):
@@ -53,7 +61,7 @@ def _compose_imports(
         # add to file to visited stack for inner imports
         JetContext._add_visit(path)
         # read and compose inner configs
-        new_node = read(path, compose=True, reset=False)
+        new_node = read(path, compose=True)
         # remove path from visited stack, since
         # we may want to import the same file in different tree node
         JetContext._rm_visit(path)
@@ -73,6 +81,8 @@ def _compose_imports(
             _node = new_node
         else:
             merge(_node, new_node)
+
+    OFFSET -= 4
 
             # node.update(**new_node)
     # revert context parameters from parent node
